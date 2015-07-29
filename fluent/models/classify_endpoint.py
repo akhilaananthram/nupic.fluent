@@ -24,6 +24,7 @@ import os
 
 from collections import defaultdict
 from cortipy.cortical_client import CorticalClient
+from cortipy.exceptions import UnsuccessfulEncodingError
 from fluent.encoders.cio_encoder import CioEncoder
 from fluent.models.classification_model import ClassificationModel
 
@@ -110,7 +111,11 @@ class ClassificationModelEndpoint(ClassificationModel):
     labelsToUpdateBitmaps = set()
     for sample, sampleLabels in zip(samples, labels):
       for label in sampleLabels:
-        fpInfo = self.encoder.encode(sample["text"])
+        try:
+          fpInfo = self.client.getTextBitmap(sample["text"])
+        except UnsuccessfulEncodingError:
+          fpInfo = None
+
         if sample["text"] and fpInfo:
           self.positives[label].append(sample["text"])
 
@@ -143,7 +148,7 @@ class ClassificationModelEndpoint(ClassificationModel):
 
     distances = defaultdict(list)
     for cat, catBitmap in self.categoryBitmaps.iteritems():
-      distances[cat] = self.client.compare(sampleBitmap, catBitmap)
+      distances[cat] = self.compare(sampleBitmap, catBitmap)
 
     return self.getWinningLabels(distances, numLabels=numLabels, metric=metric)
 
