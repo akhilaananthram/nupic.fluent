@@ -154,6 +154,10 @@ if __name__ == "__main__":
   parser.add_argument("--resultsDir",
                       default="results",
                       help="This will hold the experiment results.")
+  parser.add_argument("--batch",
+                      action="store_true",
+                      default=False,
+                      help="Train all at once")
   parser.add_argument("--textPreprocess",
                       action="store_true",
                       default=False,

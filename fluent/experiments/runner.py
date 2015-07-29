@@ -29,6 +29,7 @@ import random
 from collections import defaultdict
 from fluent.utils.csv_helper import readCSV, writeFromDict
 from fluent.utils.plotting import PlotNLP
+from pandas import DataFrame
 
 from fluent.utils.text_preprocess import TextPreprocess
 
@@ -51,7 +52,8 @@ class Runner(object):
                plots,
                orderedSplit,
                trainSize,
-               verbosity):
+               verbosity,
+               batch=False):
     """
     @param dataPath         (str)     Path to raw data file for the experiment.
     @param resultsDir       (str)     Directory where for the results metrics.
@@ -66,6 +68,7 @@ class Runner(object):
                                       samples; False is random, True is ordered.
     @param trainSize        (str)     Number of samples to use in training.
     @param verbosity        (int)     Greater value prints out more progress.
+    @param batch            (bool)    Use batch for training
 
     """
     self.dataPath = dataPath
@@ -79,6 +82,7 @@ class Runner(object):
     self.orderedSplit = orderedSplit
     self.trainSize = trainSize
     self.verbosity = verbosity
+    self.batch = batch
 
     self.modelPath = os.path.join(
       self.resultsDir, self.experimentName, self.modelName)
@@ -249,9 +253,14 @@ class Runner(object):
       print ("\tRunner selects to train on sample(s) {}".
         format(self.partitions[trial][0]))
 
-    for i in self.partitions[trial][0]:
-      self.model.trainModel([self.patterns[i]["pattern"]],
-                            [self.patterns[i]["labels"]])
+    if self.batch:
+      patterns = [self.patterns[i]["pattern"] for i in self.partitions[trial][0]]
+      labels = [self.patterns[i]["labels"] for i in self.partitions[trial][0]]
+      self.model.trainModel(patterns, labels)
+    else:
+      for i in self.partitions[trial][0]:
+        self.model.trainModel([self.patterns[i]["pattern"]],
+                              [self.patterns[i]["labels"]])
 
 
   def testing(self, trial):
@@ -310,7 +319,21 @@ class Runner(object):
       if self.plots > 1:
         # Plot extra evaluation figures -- confusion matrix.
         self.plotter.plotConfusionMatrix(
-            self.setupConfusionMatrices(resultCalcs))
+            self.setupConfusionMatrices())
+
+
+  def setupConfusionMatrices(self):
+    numLabels = len(self.labelRefs)
+    matrix = numpy.zeros((numLabels, numLabels))
+    for predicted, expected in self.results:
+      for plist, elist in zip(predicted, expected):
+        for e in elist:
+          for p in plist:
+            matrix[e][p] += 1.0
+
+    df = DataFrame(matrix, columns=self.labelRefs)
+
+    return df
 
 
   def save(self):

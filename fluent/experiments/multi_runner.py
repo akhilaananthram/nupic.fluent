@@ -47,6 +47,7 @@ class MultiRunner(Runner):
                orderedSplit,
                trainSize,
                verbosity,
+               batch=False,
                test=None):
     """
     @param dataPath         (str)     Path to raw data files for the experiment.
@@ -63,6 +64,7 @@ class MultiRunner(Runner):
     @param trainSize        (str)     Number of samples to use in training.
     @param verbosity        (int)     Greater value prints out more progress.
     @param test             (str)     Path to raw data file for testing or None
+    @param batch            (bool)    Use batch for training
 
     """
     self.test = test
@@ -73,7 +75,7 @@ class MultiRunner(Runner):
 
     super(MultiRunner, self).__init__(dataPath, resultsDir, experimentName, load,
                                       modelName, modelModuleName, numClasses, plots,
-                                      orderedSplit, trainSize, verbosity)
+                                      orderedSplit, trainSize, verbosity, batch)
 
     
   def _mapLabelRefs(self):
@@ -171,11 +173,22 @@ class MultiRunner(Runner):
       print ("\tRunner selects to train on sample(s) {}".
         format(self.partitions[trial][0]))
 
-    for labelRef, categoryIndices in enumerate(self.partitions[trial][0]):
-      category = self.labelRefs[labelRef]
-      for i in categoryIndices:
-        self.model.trainModel([self.patterns[category][i]["pattern"]],
-                              [self.patterns[category][i]["labels"]])
+    if self.batch:
+      patterns = []
+      labels = []
+      for labelRef, categoryIndices in enumerate(self.partitions[trial][0]):
+        category = self.labelRefs[labelRef]
+        for i in categoryIndices:
+          patterns.append(self.patterns[category][i]["pattern"])
+          labels.append(self.patterns[category][i]["labels"])
+
+      self.model.trainModel(patterns, labels)
+    else:
+      for labelRef, categoryIndices in enumerate(self.partitions[trial][0]):
+        category = self.labelRefs[labelRef]
+        for i in categoryIndices:
+          self.model.trainModel([self.patterns[category][i]["pattern"]],
+                                [self.patterns[category][i]["labels"]])
 
 
   def testing(self, trial):

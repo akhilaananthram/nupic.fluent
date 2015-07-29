@@ -107,7 +107,11 @@ class ClassificationModelEndpoint(ClassificationModel):
     labelsToUpdateBitmaps = set()
     for sample, sampleLabels in zip(samples, labels):
       for label in sampleLabels:
-        fpInfo = self.encoder.encode(sample["text"])
+        try:
+          fpInfo = self.client.getTextBitmap(sample["text"])
+        except UnsuccessfulEncodingError:
+          fpInfo = None
+
         if sample["text"] and fpInfo:
           self.positives[label].append(sample["text"])
 
