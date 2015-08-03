@@ -128,10 +128,35 @@ class ClassificationModelEndpoint(ClassificationModel):
           labelsToUpdateBitmaps.add(label)
 
     for label in labelsToUpdateBitmaps:
-      self.categoryBitmaps[label] = self.client.createClassification(
-          str(label),
-          self.positives[label],
-          self.negatives[label])["positions"]
+      try:
+        self.categoryBitmaps[label] = self.client.createClassification(
+            str(label),
+            self.positives[label],
+            self.negatives[label])["positions"]
+      except UnsuccessfulEncodingError:
+        self._unsuccessfulEncodingFallback(label)
+
+
+  def _unsuccessfulEncodingFallback(self, label):
+    """
+    When cortipy cannot create the classification because one of the texts
+    can't be encoded, this finds the sample that has issues
+    """
+    print "Uncucessful encoding for {}. Using fallback".format(label)
+    possiblePositives = range(len(self.positives[label]))
+    goodPositives = []
+    # TODO: replace with binary search to speed up finding the bad ones
+    positivesArray = numpy.array(self.positives[label])
+    for i in possiblePositives:
+      try:
+        self.categoryBitmaps[label] = self.client.createClassification(
+            str(label),
+            (positivesArray[goodPositives + [i]]).tolist(),
+            self.negatives[label])["positions"]
+        goodPositives += [i]
+      except:
+        print self.positives[label][i]
+    self.positives[label] = (positivesArray[goodPositives]).tolist()
 
 
   def testModel(self, sample, numLabels=3, metric="overlappingAll"):
