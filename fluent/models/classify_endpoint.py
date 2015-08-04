@@ -20,12 +20,12 @@
 # ----------------------------------------------------------------------
 
 import numpy
-import os
 
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from cortipy.cortical_client import CorticalClient
 from cortipy.exceptions import UnsuccessfulEncodingError
 from fluent.encoders.cio_encoder import CioEncoder
+from fluent.encoders.cio_encoder import LanguageEncoder
 from fluent.models.classification_model import ClassificationModel
 
 
@@ -40,12 +40,12 @@ class ClassificationModelEndpoint(ClassificationModel):
 
   def __init__(self, verbosity=1, numLabels=3):
     """
-    Initialize the CorticalClient and CioEncoder. Requires a valid API key
+    Initialize the encoder as CioEncoder; requires a valid API key.
     """
     super(ClassificationModelEndpoint, self).__init__(verbosity, numLabels)
 
     self.encoder = CioEncoder(cacheDir="./experiments/cache")
-    self.client = CorticalClient(self.encoder.apiKey)
+    self.compareEncoder = LanguageEncoder()
 
     self.n = self.encoder.n
     self.w = int((self.encoder.targetSparsity/100) * self.n)
@@ -105,8 +105,6 @@ class ClassificationModelEndpoint(ClassificationModel):
     @param negatives  (list)            Each item is the dictionary containing
                                         text, sparsity and bitmap for the
                                         negative samples.
-
-    TODO: move Cortical.io client logic to CioEncoder.
     """
     labelsToUpdateBitmaps = set()
     for sample, sampleLabels in zip(samples, labels):
@@ -173,9 +171,73 @@ class ClassificationModelEndpoint(ClassificationModel):
 
     distances = defaultdict(list)
     for cat, catBitmap in self.categoryBitmaps.iteritems():
-      distances[cat] = self.compare(sampleBitmap, catBitmap)
+      distances[cat] = self.compareEncoder.compare(sampleBitmap, catBitmap)
 
     return self.getWinningLabels(distances, numLabels=numLabels, metric=metric)
+
+
+  @staticmethod
+  def compareCategories(catDistances, metric="overlappingAll"):
+    """
+    Calculate category distances. Returns a defaultdict of category keys, where
+    values are OrderedDicts sorted such that the most similar categories
+    (according to the input metric) are listed first.
+    """
+    descendingOrder = ("overlappingAll", "overlappingLeftRight",
+                       "overlappingRightLeft", "cosineSimilarity",
+                       "weightedScoring")
+
+    categoryComparisons = defaultdict(list)
+    for k, v in catDistances.iteritems():
+      # Create a dict for this category
+      metricDict = {compareCat: distances[metric]
+                    for compareCat, distances in v.iteritems()}
+      # Sort the dict by the metric
+      reverse = True if metric in descendingOrder else False
+      categoryComparisons[k] = OrderedDict(
+          sorted(metricDict.items(), key=lambda k: k[1], reverse=reverse))
+
+    return categoryComparisons
+
+
+  def getCategoryDistances(self, sort=True, save=None, labelRefs=None):
+    """
+    Return a dict where keys are categories and values are dicts of distances.
+
+    @param sort      (bool)        Sort the inner dicts with compareCategories()
+    @param save      (str)         Dump catDistances to a JSON in this dir.
+    @return          (defaultdict)
+
+    E.g. w/ categories 0 and 1:
+      catDistances = {
+          0: {
+              0: {"cosineSimilarity": 1.0, ...},
+              1: {"cosineSimilarity": 0.33, ...}
+              },
+          1: {
+              0: {"cosineSimilarity": 0.33, ...},
+              1: {"cosineSimilarity": 1.0, ...}
+              }
+    Note the inner-dicts of catDistances are OrderedDict objects.
+    """
+    catDistances = defaultdict(list)
+    for cat, catBitmap in self.categoryBitmaps.iteritems():
+      catDistances[cat] = OrderedDict()
+      for compareCat, compareBitmap in self.categoryBitmaps.iteritems():
+        # List is in order of self.categoryBitmaps.keys()
+        catDistances[cat][compareCat] = self.compareEncoder.compare(
+            catBitmap, compareBitmap)
+
+    if sort:
+      # Order each inner dict of catDistances such that the ranking is most to
+      # least similar.
+      catDistances = self.compareCategories(catDistances)
+
+    if save is not None:
+      self.writeOutCategories(
+          save, comparisons=catDistances, labelRefs=labelRefs)
+
+    return catDistances
 
 
   @staticmethod
@@ -188,8 +250,9 @@ class ClassificationModelEndpoint(ClassificationModel):
     sortedIdx = numpy.argsort(metricValues)
 
     # euclideanDistance and jaccardDistance are ascending
-    descendingOrder = set(["overlappingAll", "overlappingLeftRight",
-      "overlappingRightLeft", "cosineSimilarity", "weightedScoring"])
+    descendingOrder = ("overlappingAll", "overlappingLeftRight",
+                       "overlappingRightLeft", "cosineSimilarity",
+                       "weightedScoring")
     if metric in descendingOrder:
       sortedIdx = sortedIdx[::-1]
 

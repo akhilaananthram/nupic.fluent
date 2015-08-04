@@ -213,7 +213,7 @@ class Runner(object):
     self.patterns = [{"pattern": self.model.encodePattern(s[0]),
                      "labels": s[1]}
                      for s in self.samples]
-    self.model.logEncodings(self.patterns, self.modelPath)
+    self.model.writeOutEncodings(self.patterns, self.modelPath)
 
 
   def runExperiment(self):
@@ -338,8 +338,8 @@ class Runner(object):
           predictions = ["(none)"]
         expected = dataDict.items()[j+self.trainSize[i]][1]
 
-        accuracies[i] += (float(len(set(predictions) & set(expected)))
-                          / len(expected))
+        accuracies[i] += (float(len(set(predictions) & set(expected[1])))
+                          / len(expected[1]))
 
       accuracies[i] = accuracies[i] / len(trial[0])
 
