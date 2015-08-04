@@ -230,12 +230,14 @@ class MultiRunner(Runner):
     for i, label in enumerate(self.labelRefs):
       length = len(self.samples[label])
       if self.orderedSplit:
-        trainIdx = range(split)
-        testIdx = range(split, length)
+        trainIdx = range(min(length, split))
       else:
         # Randomly sampled, not repeated
-        trainIdx = random.sample(xrange(length), split)
-        testIdx = [i for i in xrange(length) if i not in trainIdx]
+        if length > split:
+          trainIdx = random.sample(xrange(length), split)
+        else:
+          trainIdx = range(length)
+      testIdx = [i for i in xrange(length) if i not in trainIdx]
       trainIdxs.append(trainIdx)
       testIdxs.append(testIdx)
 

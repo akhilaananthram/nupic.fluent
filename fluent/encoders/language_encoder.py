@@ -52,6 +52,10 @@ class LanguageEncoder(object):
     self.targetSparsity = 5.0
 
 
+  def __init__(self, n):
+    self.n = n
+
+
   def encode(self, inputText):
     """
     Encodes inputText and puts the encoded value into the numpy output array,

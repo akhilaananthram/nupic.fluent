@@ -43,10 +43,11 @@ class ClassificationModelEndpoint(ClassificationModel):
     super(ClassificationModelEndpoint, self).__init__(verbosity, numLabels)
 
     self.encoder = CioEncoder(cacheDir="./experiments/cache")
-    self.compareEncoder = LanguageEncoder()
+    self.client = CorticalClient(self.encoder.apiKey)
 
     self.n = self.encoder.n
     self.w = int((self.encoder.targetSparsity/100) * self.n)
+    self.compareEncoder = LanguageEncoder(self.n)
 
     self.categoryBitmaps = {}
     self.negatives = defaultdict(list)
