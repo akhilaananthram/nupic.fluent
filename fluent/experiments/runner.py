@@ -29,7 +29,6 @@ import random
 from collections import defaultdict
 from fluent.utils.csv_helper import readCSV, writeFromDict
 from fluent.utils.plotting import PlotNLP
-from pandas import DataFrame
 
 from fluent.utils.text_preprocess import TextPreprocess
 
@@ -319,21 +318,7 @@ class Runner(object):
       if self.plots > 1:
         # Plot extra evaluation figures -- confusion matrix.
         self.plotter.plotConfusionMatrix(
-            self.setupConfusionMatrices())
-
-
-  def setupConfusionMatrices(self):
-    numLabels = len(self.labelRefs)
-    matrix = numpy.zeros((numLabels, numLabels))
-    for predicted, expected in self.results:
-      for plist, elist in zip(predicted, expected):
-        for e in elist:
-          for p in plist:
-            matrix[e][p] += 1.0
-
-    df = DataFrame(matrix, columns=self.labelRefs)
-
-    return df
+            self.setupConfusionMatrices(resultCalcs))
 
 
   def save(self):

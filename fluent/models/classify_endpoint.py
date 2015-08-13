@@ -43,11 +43,10 @@ class ClassificationModelEndpoint(ClassificationModel):
     super(ClassificationModelEndpoint, self).__init__(verbosity, numLabels)
 
     self.encoder = CioEncoder(cacheDir="./experiments/cache")
-    self.client = CorticalClient(self.encoder.apiKey)
+    self.compareEncoder = LanguageEncoder()
 
     self.n = self.encoder.n
     self.w = int((self.encoder.targetSparsity/100) * self.n)
-    self.compareEncoder = LanguageEncoder(self.n)
 
     self.categoryBitmaps = {}
     self.negatives = defaultdict(list)
@@ -108,11 +107,7 @@ class ClassificationModelEndpoint(ClassificationModel):
     labelsToUpdateBitmaps = set()
     for sample, sampleLabels in zip(samples, labels):
       for label in sampleLabels:
-        try:
-          fpInfo = self.client.getTextBitmap(sample["text"])
-        except UnsuccessfulEncodingError:
-          fpInfo = None
-
+        fpInfo = self.encoder.encode(sample["text"])
         if sample["text"] and fpInfo:
           self.positives[label].append(sample["text"])
 

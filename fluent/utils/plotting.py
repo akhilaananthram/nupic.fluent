@@ -84,16 +84,14 @@ class PlotNLP():
   @staticmethod
   def interpretConfusionMatrixData(dataFrame, normalize):
     """Parse pandas dataframe into confusion matrix format."""
-    labels = dataFrame.columns.values.tolist()
+    labels = dataFrame.columns.values.tolist()[:-1]
     values = map(list, dataFrame.values)
 
     for i, row in enumerate(values):
-      total = float(sum(row))
-      values[i] = [v/total for v in row] if normalize else row
-
+      values[i] = [v/row[-1] for v in row[:-1]] if normalize else row[:-1]
     cm = {"x":labels,
-          "y":labels,
-          "z":values
+          "y":labels[:-1],
+          "z":values[:-1]
           }
     return cm
 
@@ -102,7 +100,7 @@ class PlotNLP():
     """
     Plots the confusion matrix of the input dataframe.
     
-    @param data         (list)           List of pandas dataFrames
+    @param data         (pandas DF)     The confusion matrix.
 
     @param normalize    (bool)          True will normalize the confusion matrix
         values for the total number of actual classifications per label. Thus
