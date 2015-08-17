@@ -20,7 +20,6 @@
 # ----------------------------------------------------------------------
 
 import copy
-import math
 import numpy
 import os
 import pandas
@@ -120,50 +119,6 @@ class ClassificationModel(object):
     for i in bitmap:
       densePattern[i] = 1.0
     return densePattern
-
-
-  def compare(self, bitmap1, bitmap2):
-    """
-    @param bitmap1     (list)               indices of on bits
-    @param bitmap2     (list)               indices of on bits
-    @return dist       (dict)               distance metric name to distance
-
-    Compare bitmaps, returning the distances between the bitmaps
-    Example return dict:
-      {
-        "cosineSimilarity": 0.6666666666666666,
-        "euclideanDistance": 0.3333333333333333,
-        "jaccardDistance": 0.5,
-        "overlappingAll": 6,
-        "overlappingLeftRight": 0.6666666666666666,
-        "overlappingRightLeft": 0.6666666666666666,
-        "sizeLeft": 9,
-        "sizeRight": 9
-      }
-    """
-    if len(bitmap1) == 0 or len(bitmap2) == 0:
-      raise ValueError("Bitmaps must have on bits to compare")
-
-    sdr1 = numpy.zeros(self.n)
-    sdr2 = numpy.zeros(self.n)
-    sdr1[bitmap1] = 1
-    sdr2[bitmap2] = 1
-
-    dist = {
-      "sizeLeft": float(len(bitmap1)),
-      "sizeRight": float(len(bitmap2)),
-      "overlappingAll": float(len(numpy.intersect1d(bitmap1, bitmap2))),
-      "euclideanDistance": numpy.linalg.norm(sdr1 - sdr2)
-    }
-
-    dist["overlappingLeftRight"] = dist["overlappingAll"] / dist["sizeLeft"]
-    dist["overlappingRightLeft"] = dist["overlappingAll"] / dist["sizeRight"]
-    dist["cosineSimilarity"] = dist["overlappingAll"] / \
-      (math.sqrt(dist["sizeLeft"]) * math.sqrt(dist["sizeRight"]))
-    dist["jaccardDistance"] = 1 - (dist["overlappingAll"] / \
-      len(numpy.union1d(bitmap1, bitmap2)))
-
-    return dist
 
 
   @staticmethod
