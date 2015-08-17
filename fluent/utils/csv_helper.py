@@ -42,7 +42,7 @@ def readCSV(csvFile, sampleIdx, numLabels):
                                         corresponding category labels (strings).
   """
   try:
-    with open(csvFile) as f:
+    with open(csvFile, "rb") as f:
       reader = csv.reader(f)
       next(reader, None)
       
@@ -102,5 +102,5 @@ def writeFromDict(dataDict, headers, csvFile):
   with open(csvFile, "wb") as f:
     writer = csv.writer(f, delimiter=",")
     writer.writerow(headers)
-    for row in xrange(len(dataDict)):
+    for row in sorted(dataDict.keys()):
       writer.writerow(dataDict[row])

@@ -169,6 +169,10 @@ class MultiRunner(Runner):
     partition of indices. Models' training methods require the sample and label
     to be in a list.
     """
+    if self.verbosity > 0:
+      print ("\tRunner selects to train on sample(s) {}".
+        format(self.partitions[trial][0]))
+
     if self.batch:
       patterns = []
       labels = []
@@ -188,6 +192,10 @@ class MultiRunner(Runner):
 
 
   def testing(self, trial):
+    if self.verbosity > 0:
+      print ("\tRunner selects to test on sample(s) {}".
+        format(self.partitions[trial][1]))
+
     results = ([], [])
     if self.testPatterns:
       # Test the file that was provided
@@ -210,7 +218,7 @@ class MultiRunner(Runner):
     self.results.append(results)
 
 
-  def partitionIndices(self, split):
+  def partitionIndices(self, split, trial):
     """
     Returns train and test indices.
 
