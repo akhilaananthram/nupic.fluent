@@ -52,6 +52,7 @@ class HTMRunner(Runner):
                orderedSplit,
                trainSize,
                verbosity,
+               batch=False,
                generateData=True,
                votingMethod="last",
                classificationFile="",
@@ -78,7 +79,7 @@ class HTMRunner(Runner):
 
     super(HTMRunner, self).__init__(dataPath, resultsDir, experimentName, load,
                                     modelName, modelModuleName, numClasses,
-                                    plots, orderedSplit, trainSize, verbosity)
+                                    plots, orderedSplit, trainSize, verbosity, batch)
 
 
   def _mapLabelRefs(self):
