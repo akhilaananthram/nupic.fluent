@@ -6,21 +6,20 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
 # ----------------------------------------------------------------------
 
-import numpy
 import os
 import shutil
 import unittest
@@ -29,11 +28,6 @@ from fluent.encoders import EncoderTypes
 from fluent.experiments.htm_runner import HTMRunner
 from fluent.experiments.runner import Runner
 from fluent.utils.csv_helper import readCSV
-
-try:
-  import simplejson as json
-except ImportError:
-  import json
 
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_data")
@@ -54,7 +48,7 @@ class ClassificationModelsTest(unittest.TestCase):
       raise e
     finally:
       # Cleanup
-      shutil.rmtree(runner.modelPath.split("/")[0])
+      shutil.rmtree(runner.model.modelDir.split("/")[0])
   
   
   @staticmethod
@@ -216,7 +210,7 @@ class ClassificationModelsTest(unittest.TestCase):
     """
     runner = HTMRunner(dataPath=os.path.join(DATA_DIR, "responses_network.csv"),
                        resultsDir="",
-                       experimentName="fingerprints_test",
+                       experimentName="htm_test",
                        load=False,
                        modelName="ClassificationModelHTM",
                        modelModuleName="fluent.models.classify_htm",
