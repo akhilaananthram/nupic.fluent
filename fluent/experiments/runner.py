@@ -250,14 +250,9 @@ class Runner(object):
       print ("\tRunner selects to train on sample(s) {}".format(
           self.partitions[trial][0]))
 
-    if self.batch:
-      patterns = [self.patterns[i]["pattern"] for i in self.partitions[trial][0]]
-      labels = [self.patterns[i]["labels"] for i in self.partitions[trial][0]]
-      self.model.trainModel(patterns, labels)
-    else:
-      for i in self.partitions[trial][0]:
-        self.model.trainModel([self.patterns[i]["pattern"]],
-                              [self.patterns[i]["labels"]])
+    # TODO: set up batch training
+    for i in self.partitions[trial][0]:
+      self.model.trainModel(i)
 
 
   def testing(self, trial):
